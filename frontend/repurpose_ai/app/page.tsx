@@ -4,37 +4,61 @@ import { useState } from 'react';
 import UrlForm from '@/components/UrlForm';
 import LoadingState from '@/components/LoadingState';
 import { SocialAssets } from '@/types';
+import { CardItem } from '@/components/KanbanCard';
 
 export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [assets, setAssets] = useState<SocialAssets | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  
+
   const handleGenerate = async (url: string) => {
-    setLoading(true);
-    setError(null);
+  setLoading(true);
+  setError(null);
 
-    try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      
-      const res = await fetch(`${API_BASE}/api/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
-      });
+  try {
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const res = await fetch(`${API_BASE}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
 
-      if (!res.ok) {
-        throw new Error('Failed to generate assets. Check your URL.');
-      }
+    if (!res.ok) throw new Error('Failed to generate assets.');
 
-      const result = await res.json();
-      setAssets(result.data);
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const result = await res.json();
+    const data: SocialAssets = result.data;
+
+    // Map structured JSON into Kanban cards
+    const initialCards: CardItem[] = [
+      {
+        id: '1',
+        platform: 'Twitter Thread',
+        content: `${data.twitter.hook}\n\n` + data.twitter.tweets.map((t, i) => `${i + 1}/ ${t}`).join('\n\n'),
+        status: 'draft',
+      },
+      {
+        id: '2',
+        platform: 'LinkedIn Post',
+        content: data.linkedin,
+        status: 'draft',
+      },
+      {
+        id: '3',
+        platform: 'Newsletter Summary',
+        content: data.newsletter,
+        status: 'draft',
+      },
+    ];
+
+    setCards(initialCards);
+  } catch (err: any) {
+    setError(err.message || 'An error occurred');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <main className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -65,4 +89,8 @@ export default function HomePage() {
       </div>
     </main>
   );
+}
+
+function setCards(initialCards: CardItem[]) {
+  throw new Error('Function not implemented.');
 }
